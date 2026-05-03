@@ -10,5 +10,6 @@ namespace OperationsReportingDashboard.Data
 
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Car> Cars { get; set; }
+        public DbSet<Maintenance> Maintenances { get; set; }
     }
 }

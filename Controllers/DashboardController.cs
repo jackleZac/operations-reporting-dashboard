@@ -29,9 +29,11 @@ namespace OperationsReportingDashboard.Controllers
             // Calculate total revenue
             var totalRevenue = bookings.Sum(b => b.TotalPrice);
 
-            var totalBookings = bookings.Count;
-            var active = bookings.Count(b => b.Status == "Active");
-            var completed = bookings.Count(b => b.Status == "Completed");
+            // Calculate bookings this year
+            var totalBookings = bookings.Count(b => b.CreatedAt.Year == DateTime.Now.Year);
+            var active = bookings.Where(b => b.CreatedAt.Year == DateTime.Now.Year).Count(b => b.Status == "Active");
+            var completed = bookings.Where(b => b.CreatedAt.Year == DateTime.Now.Year).Count(b => b.Status == "Completed");
+            var cancelled = bookings.Where(b => b.CreatedAt.Year == DateTime.Now.Year).Count(b => b.Status == "Cancelled");
 
             // Calculate revenue by month for the last 6 months
             var monthlyRevenue = bookings
@@ -93,6 +95,7 @@ namespace OperationsReportingDashboard.Controllers
             ViewBag.TotalBookings = totalBookings;
             ViewBag.Active = active;
             ViewBag.Completed = completed;
+            ViewBag.Cancelled = cancelled;
             ViewBag.MonthlyRevenue = monthlyRevenue;
             ViewBag.RevenueSameMonthLastYear = revenueSameMonthLastYear;
             ViewBag.PreviousMonthRevenue = previousMonthRevenue;

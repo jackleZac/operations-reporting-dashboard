@@ -81,6 +81,80 @@ using (var scope = app.Services.CreateScope())
 
         db.SaveChanges();
     }
+
+    if (!db.Maintenances.Any())
+    {
+        var random = new Random();
+
+        var serviceTypes = Enum.GetValues<ServiceType>();
+
+        var statuses = new[]
+        {
+            "opened",
+            "in progress",
+            "completed"
+        };
+
+        var technicians = new[]
+        {
+            "Ahmad Rahman",
+            "John Tan",
+            "David Wong",
+            "Zulkarnain Abdul",
+            "Michael Lee"
+        };
+
+        var descriptions = new[]
+        {
+            "Routine maintenance check",
+            "Customer reported issue after rental",
+            "Scheduled service based on mileage",
+            "Inspection before next rental",
+            "Repair after long-distance usage",
+            "Preventive maintenance work",
+            "Minor issue detected during inspection"
+        };
+
+        var parts = new[]
+        {
+            "Engine oil, oil filter",
+            "Brake pads",
+            "Air filter",
+            "Spark plugs",
+            "Tires",
+            "Battery",
+            "Wiper blades",
+            "Coolant",
+            "Transmission fluid",
+            null
+        };
+
+        for (int i = 0; i < 120; i++)
+        {
+            var serviceDate = DateTime.Now.AddDays(-random.Next(0, 365));
+
+            db.Maintenances.Add(new Maintenance
+            {
+                CarId = random.Next(1, 16),
+                UserId = random.Next(1, 50),
+
+                LastRentalDate = serviceDate.AddDays(-random.Next(1, 20)),
+                ServiceDate = serviceDate,
+
+                ServiceType = serviceTypes[random.Next(serviceTypes.Length)],
+
+                Description = descriptions[random.Next(descriptions.Length)],
+                TechnicianName = technicians[random.Next(technicians.Length)],
+                PartsReplaced = parts[random.Next(parts.Length)],
+
+                TotalCost = random.Next(50, 2500),
+
+                Status = statuses[random.Next(statuses.Length)]
+            });
+        }
+
+        db.SaveChanges();
+    }
 }
 
 app.Run();
