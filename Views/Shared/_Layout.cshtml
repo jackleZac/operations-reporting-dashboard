@@ -44,6 +44,10 @@
         }
 
         .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .sidebar a.active-link {
             background-color: rgba(255, 255, 255, 0.15);
         }
 
@@ -69,12 +73,14 @@
 </head>
 <body>
     <div class="app-layout">
-
+        @{
+            var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+        }
         <aside class="sidebar">
             <h2>Fleet Operations</h2>
 
-            <a asp-controller="Dashboard" asp-action="Index">Dashboard</a>
-            <a asp-controller="FleetMaintenance" asp-action="Index">Fleet Maintenance</a>
+            <a asp-controller="Dashboard" asp-action="Index" class="@(currentController == "Dashboard" ? "active-link" : "")">Dashboard</a>
+            <a asp-controller="FleetMaintenance" asp-action="Index" class="@(currentController == "FleetMaintenance" ? "active-link" : "")">Fleet Maintenance</a>
         </aside>
 
         <main class="main-content">

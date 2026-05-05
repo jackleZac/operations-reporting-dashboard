@@ -59,11 +59,6 @@
         </div>
 </div>
 
-<div style="margin-top: 60px;">
-    <h3>Fuel Prices over the Past 6 Months</h3>
-    <canvas id="fuelChart"></canvas>
-</div>
-
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -74,21 +69,16 @@
         const monthlyRevenueData = monthlyRevenue.map(m => m.revenue);
 
         new Chart(document.getElementById('monthlyRevenueChart'), {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: monthlyRevenueLabels,
                 datasets: [{
                     label: 'Monthly Revenue (RM)',
                     data: monthlyRevenueData,
-                    backgroundColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    //backgroundColor: 'rgba(54, 162, 235, 1)',
                 }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
             }
         });
 
@@ -185,38 +175,6 @@
                     }
                 },
                 indexAxis: 'y' // Display as horizontal bar chart
-            }
-        });
-
-        const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.FuelDates));
-        const ron95 = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Ron95));
-        const ron97 = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Ron97));
-        const diesel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(ViewBag.Diesel));
-
-        new Chart(document.getElementById('fuelChart'), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'RON95',
-                        data: ron95,
-                        borderWidth: 2,
-                        tension: 0.3
-                    },
-                    {
-                        label: 'RON97',
-                        data: ron97,
-                        borderWidth: 2,
-                        tension: 0.3
-                    },
-                    {
-                        label: 'Diesel',
-                        data: diesel,
-                        borderWidth: 2,
-                        tension: 0.3
-                    }
-                ]
             }
         });
     </script>

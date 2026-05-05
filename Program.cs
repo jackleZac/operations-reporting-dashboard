@@ -132,7 +132,7 @@ using (var scope = app.Services.CreateScope())
         for (int i = 0; i < 120; i++)
         {
             var serviceDate = DateTime.Now.AddDays(-random.Next(0, 365));
-
+            
             db.Maintenances.Add(new Maintenance
             {
                 CarId = random.Next(1, 16),

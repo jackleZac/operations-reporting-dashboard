@@ -31,7 +31,9 @@ namespace OperationsReportingDashboard.Controllers
 
             // Total expense per ServiceType
             var expensePerServiceType = maintenanceRecords
-                .Where(m => m.TotalCost.HasValue)
+                .Where(m => m.TotalCost.HasValue
+                    && m.ServiceDate.HasValue 
+                    && m.ServiceDate.Value.Month == currentMonth)
                 .GroupBy(m => m.ServiceType)
                 .Select(g => new
                 {
@@ -44,6 +46,8 @@ namespace OperationsReportingDashboard.Controllers
 
             // Calculate number of services per ServiceType
             var serviceCountPerType = maintenanceRecords
+                .Where(m => m.ServiceDate.HasValue 
+                    && m.ServiceDate.Value.Year == currentYear)
                 .GroupBy(m => m.ServiceType)
                 .Select(g => new
                 {
@@ -76,7 +80,7 @@ namespace OperationsReportingDashboard.Controllers
                 .ToList();
 
 
-            // Identify high-maintenance cars
+            // Identify high-maintenance cars (this year)
             // Criteria: Cars whose maintenance costs exceed a threshold (20%) relative to their rental revenue
             var highMaintenanceCars = _context.Cars
                 .Include(c => c.Bookings)
@@ -85,10 +89,15 @@ namespace OperationsReportingDashboard.Controllers
                     carId = car.Id,
                     carName = car.Make + " " + car.Model,
 
-                    totalRentalRevenue = car.Bookings.Sum(b => b.TotalPrice),
+                    totalRentalRevenue = car.Bookings
+                        .Where(b => b.StartDate.Year == currentYear)
+                        .Sum(b => b.TotalPrice),
 
                     totalMaintenanceCost = _context.Maintenances
-                        .Where(m => m.CarId == car.Id)
+                        .Where(
+                            m => m.CarId == car.Id &&
+                            m.ServiceDate.HasValue &&
+                            m.ServiceDate.Value.Year == currentYear)
                         .Sum(m => m.TotalCost ?? 0)
                 })
                 .AsEnumerable()

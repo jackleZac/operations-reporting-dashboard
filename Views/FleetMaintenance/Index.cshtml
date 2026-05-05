@@ -2,107 +2,103 @@
     ViewData["Title"] = "Fleet Maintenance";
 }
 
-<div>
-    <!-- Maintenance Works This Month -->
-    <section>
+<!-- Maintenance Works This Month -->
+<section>
+    <div>
+        <h3>Number of Maintenance Works This Month</h3>
+    </div>
+    <div style="display: flex; gap: 80px;">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">Opened</p>
+            <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.OpenedCount</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">In Progress</p>
+            <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.InProgressCount</p>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">Completed</p>
+            <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.CompletedCount</p>
+        </div>
+    </div>
+</section>
+
+<!-- Monthly Maintenance Cost -->
+<section style="margin-top: 60px;">
+    <div>
         <div>
-            <h3>Number of Maintenance Works This Month</h3>
+            <h3>Total Cost of Maintenance (Last 6 Months)</h3>
+            <p>Monthly maintenance cost trend.</p>
         </div>
-        <div style="display: flex; gap: 80px;">
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-                <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">Opened</p>
-                <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.OpenedCount</p>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-                <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">In Progress</p>
-                <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.InProgressCount</p>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 6px;">
-                <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">Completed</p>
-                <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.CompletedCount</p>
-            </div>
-        </div>
-    </section>
+    </div>
 
-    <!-- Monthly Maintenance Cost -->
-    <section style="margin-top: 60px;">
-        <div>
-            <div>
-                <h3>Total Cost of Maintenance</h3>
-                <p>Monthly maintenance cost trend.</p>
-            </div>
-        </div>
+    <div>
+        <canvas id="monthlyMaintenanceCostChart"></canvas>
+    </div>
+</section>
 
+<!-- Expense Per Service Type -->
+<section style="margin-top: 60px;">
+    <div>
         <div>
-            <canvas id="monthlyMaintenanceCostChart"></canvas>
+            <h3>Service Type (This Month)</h3>
+            <p>Total Expense per Service Type</p>
         </div>
-    </section>
+    </div>
 
-    <!-- Expense Per Service Type -->
-    <section style="margin-top: 60px;">
-        <div>
-            <div>
-                <h3>Service Type</h3>
-                <p>Total Expense per Service Type</p>
+    <div>
+        <canvas id="expensePerServiceTypeChart"></canvas>
+    </div>
+</section>
+
+<section style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px;">
+    <!-- High Maintenance Cars -->
+    <div style="width: 80%;">
+        <div style="margin-bottom: 4px">
+            <div style="display: flex; flex-direction: row; justify-content: space-between;">
+                <h3>High Maintenance Cars</h3>
+                <button style="height: fit-content; margin: auto 0;">This Year</button>
             </div>
+            <p>Cars whose maintenance costs exceed 20% of total rental revenue.</p>
         </div>
 
         <div>
-            <canvas id="expensePerServiceTypeChart"></canvas>
-        </div>
-    </section>
-
-    <section style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; margin-top: 60px;">
-        <!-- High Maintenance Cars -->
-        <div style="width: 80%;">
-            <div style="margin-bottom: 4px">
-                <div style="display: flex; flex-direction: row; justify-content: space-between;">
-                    <h3>High Maintenance Cars</h3>
-                    <button style="height: fit-content; margin: auto 0;">This Year</button>
-                </div>
-                <p>Cars whose maintenance costs exceed 20% of total rental revenue.</p>
-            </div>
-
-            <div>
-                @if (ViewBag.HighMaintenanceCars != null && ViewBag.HighMaintenanceCars.Count > 0)
+            @if (ViewBag.HighMaintenanceCars != null && ViewBag.HighMaintenanceCars.Count > 0)
+            {
+                foreach (var car in ViewBag.HighMaintenanceCars)
                 {
-                    foreach (var car in ViewBag.HighMaintenanceCars)
-                    {
-                        <div style="margin-bottom: 4px; padding: 12px 16px; border: 1px solid #bababa; border-radius: 6px;">
-                            <h3>@car.carName</h3>
-                            <div style="display: flex; flex-direction: row; justify-content: space-between;">
-                                <div>
-                                    <p style="font-size: 0.9em; font-weight: 400; color: #404040;">Total maintenance cost</p>
-                                    <p style="font-size: 1.4 em; font-weight: 600;">RM @car.totalMaintenanceCost.ToString("N2")</p>
-                                </div>
-                                <div style="text-align: right;">
-                                    <p style="font-size: 0.9em; font-weight: 400; color: #404040;">@car.maintenanceRatio%</p>
-                                    <p style="font-size: 1.4 em; font-weight: 600;">Ratio</p>
-                                </div>
+                    <div style="margin-bottom: 4px; padding: 12px 16px; border: 1px solid #bababa; border-radius: 6px;">
+                        <h3>@car.carName</h3>
+                        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.9em; font-weight: 400; color: #404040;">Total maintenance cost</p>
+                                <p style="font-size: 1.4 em; font-weight: 600;">RM @car.totalMaintenanceCost.ToString("N2")</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-size: 0.9em; font-weight: 400; color: #404040;">@car.maintenanceRatio%</p>
+                                <p style="font-size: 1.4 em; font-weight: 600;">Ratio</p>
                             </div>
                         </div>
-                    }
+                    </div>
                 }
-                else
-                {
-                    <p>No high-maintenance cars found.</p>
-                }
-            </div>
+            }
+            else
+            {
+                <p>No high-maintenance cars found.</p>
+            }
         </div>
-        <!-- Number of Services Per Type -->
+    </div>
+    <!-- Number of Services Per Type -->
+    <div style="width: 80%">
         <div>
-            <div>
-                <div>
-                    <h3>Service Type</h3>
-                    <p>Number of Services</p>
-                </div>
-            </div>
-            <div style="height: 520px;">
-                <canvas id="serviceCountChart"></canvas>
-            </div>
+            <h3>Service Type</h3>
+            <p>Number of Services (This Year)</p>
         </div>
-    </section>
-</div>
+        <div style="height: 520px;">
+            <canvas id="serviceCountChart"></canvas>
+        </div>
+    </div>
+</section>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
