@@ -2,21 +2,62 @@
     ViewData["Title"] = "Fleet Maintenance";
 }
 
+<style>
+    .summary-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background-color: #e7e7e7;
+        padding: 12px;
+        border-radius: 4px;
+        width: 200px;
+    }
+
+    /* Period filter tabs */
+    .period-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+    }
+
+    .period-tab {
+        padding: 5px 14px;
+        font-size: 0.8em;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        background: #fff;
+        color: #555;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .period-tab:hover {
+        border-color: #888;
+        color: #222;
+    }
+
+    .period-tab.active {
+        background: #222;
+        color: #fff;
+        border-color: #222;
+    }
+</style>
+
 <!-- Maintenance Works This Month -->
 <section>
     <div>
         <h3>Number of Maintenance Works This Month</h3>
     </div>
     <div style="display: flex; gap: 80px;">
-        <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="summary-card">
             <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">Opened</p>
             <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.OpenedCount</p>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="summary-card">
             <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">In Progress</p>
             <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.InProgressCount</p>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
+        <div class="summary-card">
             <p style="margin: 0; padding: 0; font-size: 0.8em; color: #555;">Completed</p>
             <p style="margin: 0; padding: 0; font-size: 1.2em; font-weight: 600;">@ViewBag.CompletedCount</p>
         </div>
@@ -27,8 +68,12 @@
 <section style="margin-top: 60px;">
     <div>
         <div>
-            <h3>Total Cost of Maintenance (Last 6 Months)</h3>
+            <h3>Total Cost of Maintenance</h3>
             <p>Monthly maintenance cost trend.</p>
+        </div>
+        <div class="period-tabs" id="monthlyMaintenanceCostTabs">
+            <button class="period-tab" data-period="3months" onclick="setMonthlyMaintenanceCostPeriod(this)">Last 3 Months</button>
+            <button class="period-tab active" data-period="6months" onclick="setMonthlyMaintenanceCostPeriod(this)">Last 6 Months</button>
         </div>
     </div>
 
@@ -107,7 +152,8 @@
         // Data from Controller
         const expensePerServiceType = @Html.Raw(Json.Serialize(ViewBag.ExpensePerServiceType));
         const serviceCountPerType = @Html.Raw(Json.Serialize(ViewBag.ServiceCountPerType));
-        const monthlyMaintenanceCost = @Html.Raw(Json.Serialize(ViewBag.MonthlyMaintenanceCost));
+        const totalMaintenanceCostLast6Months = @Html.Raw(Json.Serialize(ViewBag.TotalMaintenanceCostLast6Months));
+        const totalMaintenanceCostLast3Months = @Html.Raw(Json.Serialize(ViewBag.TotalMaintenanceCostLast3Months));
 
         // Expense Per Service Type
         const expenseLabels = expensePerServiceType.map(x => x.serviceType);
@@ -156,7 +202,8 @@
         // Number of Services Per Type
         const serviceCountLabels = serviceCountPerType.map(x => x.serviceType);
         const serviceCountData = serviceCountPerType.map(x => x.count);
-
+        
+        // Create chart for service count per type
         new Chart(document.getElementById('serviceCountChart'), {
             type: 'bar',
             data: {
@@ -190,13 +237,12 @@
             }
         });
 
-        // Monthly Maintenance Cost
-        const monthlyCostLabels = monthlyMaintenanceCost.map(x =>
+        // Monthly Maintenance Cost Trend
+        // by default, show last 6 months
+        const monthlyCostData = totalMaintenanceCostLast6Months.map(x => x.totalCost);
+        const monthlyCostLabels = totalMaintenanceCostLast6Months.map(x =>
             `${x.month.toString().padStart(2, '0')}-${x.year}`
         );
-
-        const monthlyCostData = monthlyMaintenanceCost.map(x => x.totalCost);
-
         new Chart(document.getElementById('monthlyMaintenanceCostChart'), {
             type: 'line',
             data: {
@@ -231,5 +277,31 @@
                 }
             }
         });
+
+        function buildMonthlyMaintenanceCostChart(data) {
+            const monthlyCostLabels = data.map(x =>
+                `${x.month.toString().padStart(2, '0')}-${x.year}`
+            );
+
+            const monthlyCostData = data.map(x => x.totalCost);
+
+            const chart = Chart.getChart('monthlyMaintenanceCostChart');
+            chart.data.labels = monthlyCostLabels;
+            chart.data.datasets[0].data = monthlyCostData;
+            chart.update();
+        }
+
+        function setMonthlyMaintenanceCostPeriod(btn) {
+            document.querySelectorAll('#monthlyMaintenanceCostTabs .period-tab')
+                .forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const data = btn.dataset.period === '3months'
+                ? totalMaintenanceCostLast3Months
+                : totalMaintenanceCostLast6Months;
+
+            buildMonthlyMaintenanceCostChart(data);
+        }
+
     </script>
 }

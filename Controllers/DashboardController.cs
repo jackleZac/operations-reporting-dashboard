@@ -8,7 +8,7 @@ namespace OperationsReportingDashboard.Controllers
         private readonly AppDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public DashboardController(AppDbContext context,  IHttpClientFactory httpClientFactory)
+        public DashboardController(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
@@ -31,9 +31,33 @@ namespace OperationsReportingDashboard.Controllers
             var completed = bookings.Where(b => b.CreatedAt.Year == DateTime.Now.Year).Count(b => b.Status == "Completed");
             var cancelled = bookings.Where(b => b.CreatedAt.Year == DateTime.Now.Year).Count(b => b.Status == "Cancelled");
 
-            // Calculate revenue by month for the last 6 months
-            var monthlyRevenue = bookings
+            // --- Monthly Revenue: This Month, Last 3 Months, Last 6 Months ---
+            var monthlyRevenue6M = bookings
                 .Where(b => b.CreatedAt >= DateTime.Now.AddMonths(-6))
+                .GroupBy(b => new { b.CreatedAt.Year, b.CreatedAt.Month })
+                .Select(g => new
+                {
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    Revenue = g.Sum(x => x.TotalPrice)
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToList();
+
+            var monthlyRevenue3M = bookings
+                .Where(b => b.CreatedAt >= DateTime.Now.AddMonths(-3))
+                .GroupBy(b => new { b.CreatedAt.Year, b.CreatedAt.Month })
+                .Select(g => new
+                {
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    Revenue = g.Sum(x => x.TotalPrice)
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToList();
+
+            var monthlyRevenueThisMonth = bookings
+                .Where(b => b.CreatedAt.Year == DateTime.Now.Year && b.CreatedAt.Month == DateTime.Now.Month)
                 .GroupBy(b => new { b.CreatedAt.Year, b.CreatedAt.Month })
                 .Select(g => new
                 {
@@ -46,20 +70,40 @@ namespace OperationsReportingDashboard.Controllers
 
             // Get current month revenue
             var currentMonth = DateTime.Now.Month;
-            var currentMonthRevenue = monthlyRevenue.LastOrDefault(m => m.Month == currentMonth)?.Revenue ?? 0;
+            var currentMonthRevenue = monthlyRevenue6M.LastOrDefault(m => m.Month == currentMonth)?.Revenue ?? 0;
 
-            // Calculate revenue of the same month (for YoY comparison)of the previous year
+            // Calculate revenue of the same month last year (for YoY comparison)
             var revenueSameMonthLastYear = bookings
                 .Where(b => b.CreatedAt.Month == currentMonth && b.CreatedAt.Year == DateTime.Now.Year - 1)
                 .Sum(b => b.TotalPrice);
 
             // Get revenue of the previous month (for MoM comparison)
             var previousMonth = DateTime.Now.AddMonths(-1).Month;
-            var previousMonthRevenue = monthlyRevenue.LastOrDefault(m => m.Month == previousMonth)?.Revenue ?? 0;
-            
-            // Total revenue by car model (current month)
-            var monthlyRevenueByCar = bookings
-                .Where(b => b.CreatedAt >= DateTime.Now.AddMonths(-1))
+            var previousMonthRevenue = monthlyRevenue6M.LastOrDefault(m => m.Month == previousMonth)?.Revenue ?? 0;
+
+            // --- Revenue Breakdown by Cars: This Month, Last 3 Months, Last 6 Months ---
+            var revenueByCar6M = bookings
+                .Where(b => b.CreatedAt >= DateTime.Now.AddMonths(-6))
+                .GroupBy(b => b.CarId)
+                .Select(g => new
+                {
+                    CarId = g.Key,
+                    Revenue = g.Sum(x => x.TotalPrice)
+                })
+                .ToList();
+
+            var revenueByCar3M = bookings
+                .Where(b => b.CreatedAt >= DateTime.Now.AddMonths(-3))
+                .GroupBy(b => b.CarId)
+                .Select(g => new
+                {
+                    CarId = g.Key,
+                    Revenue = g.Sum(x => x.TotalPrice)
+                })
+                .ToList();
+
+            var revenueByCarThisMonth = bookings
+                .Where(b => b.CreatedAt.Year == DateTime.Now.Year && b.CreatedAt.Month == DateTime.Now.Month)
                 .GroupBy(b => b.CarId)
                 .Select(g => new
                 {
@@ -74,12 +118,19 @@ namespace OperationsReportingDashboard.Controllers
             ViewBag.Active = active;
             ViewBag.Completed = completed;
             ViewBag.Cancelled = cancelled;
-            ViewBag.MonthlyRevenue = monthlyRevenue;
+
+            ViewBag.MonthlyRevenue6M = monthlyRevenue6M;
+            ViewBag.MonthlyRevenue3M = monthlyRevenue3M;
+            ViewBag.MonthlyRevenueThisMonth = monthlyRevenueThisMonth;
+
             ViewBag.RevenueSameMonthLastYear = revenueSameMonthLastYear;
             ViewBag.PreviousMonthRevenue = previousMonthRevenue;
             ViewBag.CurrentMonthRevenue = currentMonthRevenue;
-            ViewBag.MonthlyRevenueByCar = monthlyRevenueByCar;
-            
+
+            ViewBag.RevenueByCar6M = revenueByCar6M;
+            ViewBag.RevenueByCar3M = revenueByCar3M;
+            ViewBag.RevenueByCarThisMonth = revenueByCarThisMonth;
+
             return View();
         }
     }

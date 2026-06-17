@@ -58,27 +58,34 @@ namespace OperationsReportingDashboard.Controllers
                 .ToList();
 
 
-            // Calculate total maintenance cost every month for last 6 months
-            var sixMonthsAgo = now.AddMonths(-5);
-
-            var monthlyMaintenanceCost = maintenanceRecords
+            // --- Total Maintenance: Last 3 Months, Last 6 Months ---
+            var totalMaintenanceCostLast3Months = maintenanceRecords
                 .Where(m => m.ServiceDate.HasValue &&
-                            m.ServiceDate.Value >= new DateTime(sixMonthsAgo.Year, sixMonthsAgo.Month, 1))
-                .GroupBy(m => new
-                {
-                    Year = m.ServiceDate!.Value.Year,
-                    Month = m.ServiceDate!.Value.Month
-                })
+                            m.ServiceDate.Value >= now.AddMonths(-3))
+                .GroupBy(m => new { m.ServiceDate!.Value.Year, m.ServiceDate!.Value.Month })
                 .Select(g => new
                 {
-                    year = g.Key.Year,
-                    month = g.Key.Month,
-                    totalCost = g.Sum(m => m.TotalCost ?? 0)
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    totalCost = g.Count()
                 })
-                .OrderBy(x => x.year)
-                .ThenBy(x => x.month)
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToList();
 
+            var totalMaintenanceCostLast6Months = maintenanceRecords
+                .Where(m => m.ServiceDate.HasValue &&
+                            m.ServiceDate.Value >= now.AddMonths(-6))
+                .GroupBy(m => new { m.ServiceDate!.Value.Year, m.ServiceDate!.Value.Month })
+                .Select(g => new
+                {
+                    Month = g.Key.Month,
+                    Year = g.Key.Year,
+                    totalCost = g.Count()
+                })
+                .OrderBy(x => x.Year).ThenBy(x => x.Month)
+                .ToList()
+
+            ;
 
             // Identify high-maintenance cars (this year)
             // Criteria: Cars whose maintenance costs exceed a threshold (20%) relative to their rental revenue
@@ -123,7 +130,8 @@ namespace OperationsReportingDashboard.Controllers
                 .Count(m => m.Status.ToLower() == "completed");
             ViewBag.ExpensePerServiceType = expensePerServiceType;
             ViewBag.ServiceCountPerType = serviceCountPerType;
-            ViewBag.MonthlyMaintenanceCost = monthlyMaintenanceCost;
+            ViewBag.TotalMaintenanceCostLast6Months = totalMaintenanceCostLast6Months;
+            ViewBag.TotalMaintenanceCostLast3Months = totalMaintenanceCostLast3Months;
             ViewBag.HighMaintenanceCars = highMaintenanceCars;
 
             return View();
