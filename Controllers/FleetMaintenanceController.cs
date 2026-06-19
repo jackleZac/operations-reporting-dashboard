@@ -87,9 +87,10 @@ namespace OperationsReportingDashboard.Controllers
 
             ;
 
-            // Identify high-maintenance cars (this year)
+            // Identify high-maintenance cars (this year, 6 months ago, 3 months ago, and current month)
             // Criteria: Cars whose maintenance costs exceed a threshold (20%) relative to their rental revenue
-            var highMaintenanceCars = _context.Cars
+            // Returns 4 lists: This Year, Last 6 Months, Last 3 Months, Current Month
+            var highMaintenanceCarsThisYear = _context.Cars
                 .Include(c => c.Bookings)
                 .Select(car => new
                 {
@@ -122,6 +123,105 @@ namespace OperationsReportingDashboard.Controllers
                 .Take(5)
                 .ToList();
 
+            var highMaintenanceCarsLast6Months = _context.Cars
+                .Include(c => c.Bookings)
+                .Select(car => new
+                {
+                    carId = car.Id,
+                    carName = car.Make + " " + car.Model,
+
+                    totalRentalRevenue = car.Bookings
+                        .Where(b => b.StartDate >= now.AddMonths(-6))
+                        .Sum(b => b.TotalPrice),
+
+                    totalMaintenanceCost = _context.Maintenances
+                        .Where(
+                            m => m.CarId == car.Id &&
+                            m.ServiceDate.HasValue &&
+                            m.ServiceDate.Value >= now.AddMonths(-6))
+                        .Sum(m => m.TotalCost ?? 0)
+                })
+                .AsEnumerable()
+                .Where(c => c.totalRentalRevenue > 0 &&
+                            c.totalMaintenanceCost >= c.totalRentalRevenue * 0.20m)
+                .Select(c => new
+                {
+                    carId = c.carId,
+                    carName = c.carName,
+                    totalRentalRevenue = c.totalRentalRevenue,
+                    totalMaintenanceCost = c.totalMaintenanceCost,
+                    maintenanceRatio = Math.Round((c.totalMaintenanceCost / c.totalRentalRevenue) * 100, 2)
+                })
+                .OrderByDescending(c => c.maintenanceRatio)
+                .Take(5)
+                .ToList();
+
+            var highMaintenanceCarsLast3Months = _context.Cars
+                .Include(c => c.Bookings)
+                .Select(car => new
+                {
+                    carId = car.Id,
+                    carName = car.Make + " " + car.Model,
+
+                    totalRentalRevenue = car.Bookings
+                        .Where(b => b.StartDate >= now.AddMonths(-3))
+                        .Sum(b => b.TotalPrice),
+
+                    totalMaintenanceCost = _context.Maintenances
+                        .Where(
+                            m => m.CarId == car.Id &&
+                            m.ServiceDate.HasValue &&
+                            m.ServiceDate.Value >= now.AddMonths(-3))
+                        .Sum(m => m.TotalCost ?? 0)
+                })
+                .AsEnumerable()
+                .Where(c => c.totalRentalRevenue > 0 &&
+                            c.totalMaintenanceCost >= c.totalRentalRevenue * 0.20m)
+                .Select(c => new
+                {
+                    carId = c.carId,
+                    carName = c.carName,
+                    totalRentalRevenue = c.totalRentalRevenue,
+                    totalMaintenanceCost = c.totalMaintenanceCost,
+                    maintenanceRatio = Math.Round((c.totalMaintenanceCost / c.totalRentalRevenue) * 100, 2)
+                })
+                .OrderByDescending(c => c.maintenanceRatio)
+                .Take(5)
+                .ToList();
+
+            var highMaintenanceCarsCurrentMonth = _context.Cars
+                .Include(c => c.Bookings)
+                .Select(car => new
+                {
+                    carId = car.Id,
+                    carName = car.Make + " " + car.Model,
+
+                    totalRentalRevenue = car.Bookings
+                        .Where(b => b.StartDate.Month == currentMonth && b.StartDate.Year == currentYear)
+                        .Sum(b => b.TotalPrice),
+
+                    totalMaintenanceCost = _context.Maintenances
+                        .Where(
+                            m => m.CarId == car.Id &&
+                            m.ServiceDate.HasValue &&
+                            m.ServiceDate.Value.Month == currentMonth &&
+                            m.ServiceDate.Value.Year == currentYear)
+                        .Sum(m => m.TotalCost ?? 0)
+                })
+                .AsEnumerable()
+                .Where(c => c.totalRentalRevenue > 0 &&
+                            c.totalMaintenanceCost >= c.totalRentalRevenue * 0.20m)
+                .Select(c => new
+                {                    carId = c.carId,
+                    carName = c.carName,
+                    totalRentalRevenue = c.totalRentalRevenue,
+                    totalMaintenanceCost = c.totalMaintenanceCost,
+                    maintenanceRatio = Math.Round((c.totalMaintenanceCost / c.totalRentalRevenue) * 100, 2)
+                })
+                .OrderByDescending(c => c.maintenanceRatio)
+                .Take(5)
+                .ToList();
+
             ViewBag.OpenedCount = thisMonthMaintenance
                 .Count(m => m.Status.ToLower() == "opened");
             ViewBag.InProgressCount = thisMonthMaintenance
@@ -132,7 +232,9 @@ namespace OperationsReportingDashboard.Controllers
             ViewBag.ServiceCountPerType = serviceCountPerType;
             ViewBag.TotalMaintenanceCostLast6Months = totalMaintenanceCostLast6Months;
             ViewBag.TotalMaintenanceCostLast3Months = totalMaintenanceCostLast3Months;
-            ViewBag.HighMaintenanceCars = highMaintenanceCars;
+            ViewBag.HighMaintenanceCarsThisYear = highMaintenanceCarsThisYear;
+            ViewBag.HighMaintenanceCarsLast6Months = highMaintenanceCarsLast6Months;
+            ViewBag.HighMaintenanceCarsLast3Months = highMaintenanceCarsLast3Months;
 
             return View();
         }

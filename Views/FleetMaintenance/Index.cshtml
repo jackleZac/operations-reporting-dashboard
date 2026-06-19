@@ -100,27 +100,32 @@
     <!-- High Maintenance Cars -->
     <div style="width: 80%;">
         <div style="margin-bottom: 4px">
-            <div style="display: flex; flex-direction: row; justify-content: space-between;">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
                 <h3>High Maintenance Cars</h3>
-                <button style="height: fit-content; margin: auto 0;">This Year</button>
+                <div class="period-tabs" id="highMaintenanceCarsTabs">
+                    <button class="period-tab" data-period="3months" onclick="setMaintenanceCarsPeriod(this)">Last 3 Months</button>
+                    <button class="period-tab" data-period="6months" onclick="setMaintenanceCarsPeriod(this)">Last 6 Months</button>
+                    <button class="period-tab active" data-period="thisyear" onclick="setMaintenanceCarsPeriod(this)">This Year</button>
+                </div>
             </div>
             <p>Cars whose maintenance costs exceed 20% of total rental revenue.</p>
         </div>
 
-        <div>
-            @if (ViewBag.HighMaintenanceCars != null && ViewBag.HighMaintenanceCars.Count > 0)
+        <div id="highMaintenanceCarsContainer">
+            <! -- Initial rendering of high-maintenance cars for the default period (this year) -->
+            @if (ViewBag.HighMaintenanceCarsThisYear != null && ViewBag.HighMaintenanceCarsThisYear.Count > 0)
             {
-                foreach (var car in ViewBag.HighMaintenanceCars)
+                foreach (var car in ViewBag.HighMaintenanceCarsThisYear)
                 {
-                    <div style="margin-bottom: 4px; padding: 12px 16px; border: 1px solid #bababa; border-radius: 6px;">
-                        <h3>@car.carName</h3>
-                        <div style="display: flex; flex-direction: row; justify-content: space-between;">
+                    <div style="margin-bottom: 4px; padding: 12px 16px; border: 1px solid #bababa; border-width: 0 0 1px 0;">
+                        <h3 style="margin: 4px 0 0 0;">@car.carName</h3>
+                        <div style="margin: 2px 0 0 0; display: flex; flex-direction: row; justify-content: space-between;">
                             <div>
                                 <p style="font-size: 0.9em; font-weight: 400; color: #404040;">Total maintenance cost</p>
-                                <p style="font-size: 1.4 em; font-weight: 600;">RM @car.totalMaintenanceCost.ToString("N2")</p>
+                                <p style="font-size: 1.4 em; font-weight: 600;">RM @car.totalMaintenanceCost.ToString("F2")</p>
                             </div>
                             <div style="text-align: right;">
-                                <p style="font-size: 0.9em; font-weight: 400; color: #404040;">@car.maintenanceRatio%</p>
+                                <p style="font-size: 0.9em; font-weight: 400; color: #404040;">@car.maintenanceRatio.ToString("F2")%</p>
                                 <p style="font-size: 1.4 em; font-weight: 600;">Ratio</p>
                             </div>
                         </div>
@@ -133,6 +138,7 @@
             }
         </div>
     </div>
+
     <!-- Number of Services Per Type -->
     <div style="width: 80%">
         <div>
@@ -154,6 +160,62 @@
         const serviceCountPerType = @Html.Raw(Json.Serialize(ViewBag.ServiceCountPerType));
         const totalMaintenanceCostLast6Months = @Html.Raw(Json.Serialize(ViewBag.TotalMaintenanceCostLast6Months));
         const totalMaintenanceCostLast3Months = @Html.Raw(Json.Serialize(ViewBag.TotalMaintenanceCostLast3Months));
+        const totalMaintenanceCostThisYear = @Html.Raw(Json.Serialize(ViewBag.TotalMaintenanceCostThisYear));
+
+        // List of high-maintenance cars
+        function setMaintenanceCarsPeriod(btn) {
+            document.querySelectorAll('#highMaintenanceCarsTabs .period-tab')
+                .forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+
+            const period = btn.dataset.period;
+            let carsData;
+
+            switch (period) {
+                case '3months':
+                    carsData = @Html.Raw(Json.Serialize(ViewBag.HighMaintenanceCarsLast3Months));
+                    break;
+                case '6months':
+                    carsData = @Html.Raw(Json.Serialize(ViewBag.HighMaintenanceCarsLast6Months));
+                    break;
+                case 'thisyear':
+                    carsData = @Html.Raw(Json.Serialize(ViewBag.HighMaintenanceCarsThisYear));
+                    break;
+                default:
+                    carsData = [];
+            }
+
+            const container = document.querySelector('#highMaintenanceCarsContainer');
+            container.innerHTML = '';
+
+            if (carsData.length > 0) {
+                carsData.forEach(car => {
+                    const carCard = document.createElement('div');
+                    carCard.style.marginBottom = '4px';
+                    carCard.style.padding = '12px 16px';
+                    carCard.style.border = '1px solid #bababa';
+                    carCard.style.borderWidth = '0 0 1px 0';
+
+                    carCard.innerHTML = `
+                        <h3 style="margin: 4px 0 0 0;">${car.carName}</h3>
+                        <div style="margin: 2px 0 0 0; display: flex; flex-direction: row; justify-content: space-between;">
+                            <div>
+                                <p style="font-size: 0.9em; font-weight: 400; color: #404040;">Total maintenance cost</p>
+                                <p style="font-size: 1.4 em; font-weight: 600;">RM ${car.totalMaintenanceCost.toFixed(2)}</p>
+                            </div>
+                            <div style="text-align: right;">
+                                <p style="font-size: 0.9em; font-weight: 400; color: #404040;">Ratio</p>
+                                <p style="font-size: 1.4 em; font-weight: 600;">${car.maintenanceRatio}%</p>
+                            </div>
+                        </div>
+                    `;
+
+                    container.appendChild(carCard);
+                });
+            } else {
+                container.innerHTML = '<p>No high-maintenance cars found.</p>';
+            }
+        };
 
         // Expense Per Service Type
         const expenseLabels = expensePerServiceType.map(x => x.serviceType);
